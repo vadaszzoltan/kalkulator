@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Megtérülés Kalkulátor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffffff; /* Fehér háttér */
+        }
+        .brand-color {
+            color: #2563eb; /* Élénk kék (blue-600) */
+        }
+        .brand-bg {
+            background-color: #2563eb;
+        }
+        .brand-accent-bg {
+            background-color: #eff6ff; /* Világos kék (blue-50) */
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d1d5db;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            transition: background-color: 0.2s;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            transition: background-color: 0.2s;
+        }
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+            padding: 2.5rem;
+            border: 1px solid #e5e7eb;
+            min-height: 820px; /* Consistent height */
+        }
+        .result-card {
+            transition: all 0.3s ease-in-out;
+        }
+        input:read-only {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+        .calculator-tab {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; /* pill shape */
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            background-color: #e5e7eb; /* gray-200 */
+            color: #4b5563; /* gray-600 */
+            border: none;
+            cursor: pointer;
+        }
+        .calculator-tab:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .calculator-tab.active {
+            background-color: #2563eb; /* brand-color */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        .stepper-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        .stepper-btn:hover {
+            background-color: #d1d5db;
+        }
+        .icon-btn {
+            padding: 4px;
+            border-radius: 50%;
+            background-color: transparent;
+            color: #9ca3af; /* gray-400 */
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            color: #4b5563; /* gray-600 */
+            background-color: #f3f4f6; /* gray-100 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-7xl mx-auto">
+        
+        <div class="flex justify-center flex-wrap gap-2 mb-8" id="calculator-nav">
+            <button class="calculator-tab active" data-target="calculator-alap">🧾 Alap adatok</button>
+            <button class="calculator-tab" data-target="calculator-linearis">💰 Költés arányos növekedés</button>
+            <button class="calculator-tab" data-target="calculator-adatvezerelt">💡 Adatvezérelt növekedés</button>
+        </div>
+
+        <!-- Alap adatok Kalkulátor -->
+        <div id="calculator-alap" class="calculator-content">
+            <div class="card flex flex-col lg:flex-row gap-8">
+                <!-- Input Section -->
+                <div class="w-full lg:w-1/2 flex flex-col space-y-6">
+                    <div>
+                        <label for="totalBudget" class="block text-sm font-medium text-gray-700">Teljes Hirdetési Keret (€)</label>
+                        <input type="number" id="totalBudget" value="1000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2" readonly>
+                    </div>
+    
+                    <h3 class="text-lg font-semibold text-gray-800 border-b pb-2">Költségelosztás (Fix)</h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Facebook hirdetések és facebook remarketing:</span>
+                            <span class="text-sm font-semibold brand-color">€400</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Google képes hirdetések:</span>
+                            <span class="text-sm font-semibold brand-color">€300</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Google kulcsszavas hirdetések:</span>
+                            <span class="text-sm font-semibold brand-color">€300</span>
+                        </div>
+                    </div>
+    
+                    <div class="pt-4">
+                        <label for="revenue" class="block text-sm font-medium text-gray-700">Generált Forgalom (€)</label>
+                        <input type="number" id="revenue" value="4000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2" readonly>
+                        <p class="text-xs text-gray-500 mt-1">A kalkuláció 100 db eladás alapján.</p>
+                    </div>
+                    
+                    <div class="flex-grow flex flex-col justify-end">
+                        <div class="flex justify-between items-center">
+                            <label for="margin" class="block text-sm font-medium text-gray-700">Átlagos Árrés</label>
+                            <span class="text-sm font-semibold brand-color"><span id="marginValue">30</span>%</span>
+                        </div>
+                        <input type="range" id="margin" min="0" max="100" value="30" class="mt-1 w-full">
+                        <p class="text-xs text-gray-500 mt-1">Figyelem: A modell nem számol az árrés növelésével arányosan csökkenő kereslettel.</p>
+                    </div>
+                </div>
+    
+                <!-- Output Section -->
+                <div class="w-full lg:w-1/2 brand-accent-bg p-6 rounded-lg flex flex-col justify-center space-y-4">
+                    <h3 class="text-xl font-bold text-gray-800 text-center mb-4">Eredmények Összesítése</h3>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                        <span class="font-medium text-gray-600">Teljes Hirdetési Költség:</span>
+                        <span id="totalSpend" class="font-bold text-lg text-red-600">€1000</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                        <span class="font-medium text-gray-600">Bruttó Profit (Árrés):</span>
+                        <span id="grossProfit" class="font-bold text-lg text-blue-600">€1200</span>
+                    </div>
+                    <div id="resultCard" class="result-card text-center p-4 rounded-lg mt-4">
+                        <p class="text-lg font-medium">Nettó Eredmény</p>
+                        <p id="netProfit" class="text-4xl font-bold">€200</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Költés arányos növekedés Kalkulátor -->
+        <div id="calculator-linearis" class="calculator-content hidden">
+            <div class="card flex flex-col lg:flex-row gap-8">
+                <!-- Input Section -->
+                <div class="w-full lg:w-1/2 flex flex-col space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="ls_totalBudget" class="block text-sm font-medium text-gray-700">Teljes Hirdetési Keret</label>
+                            <span class="text-sm font-semibold brand-color">€<span id="ls_totalBudgetValue">1000</span></span>
+                        </div>
+                        <div class="relative pt-2">
+                             <input type="range" id="ls_totalBudget" min="1000" max="6000" value="1000" step="50" class="w-full">
+                             <div class="absolute top-0 h-full -translate-x-1/2" style="left: 60%; border-left: 2px dashed #9ca3af;"></div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-gray-800 border-b pb-2">Költségelosztás (Dinamikus)</h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Facebook hirdetések és facebook remarketing:</span>
+                            <span class="text-sm font-semibold brand-color">€<span id="ls_fbSpendValue">400</span></span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Google képes hirdetések:</span>
+                            <span class="text-sm font-semibold brand-color">€<span id="ls_gdSpendValue">300</span></span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Google kulcsszavas hirdetések:</span>
+                            <span class="text-sm font-semibold brand-color">€<span id="ls_gsSpendValue">300</span></span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <label for="ls_revenue" class="block text-sm font-medium text-gray-700">Generált Forgalom (€)</label>
+                        <input type="number" id="ls_revenue" value="4000" class="mt-1 block w-full rounded-md sm:text-sm p-2" readonly>
+                        <p class="text-xs text-gray-500 mt-1">A forgalom a keret alapján, lineárisan skálázódik a piaci telítettségig.</p>
+                    </div>
+                    
+                    <div class="flex-grow flex flex-col justify-end">
+                        <div class="flex justify-between items-center">
+                            <label for="ls_margin" class="block text-sm font-medium text-gray-700">Átlagos Árrés</label>
+                            <span class="text-sm font-semibold brand-color"><span id="ls_marginValue">30</span>%</span>
+                        </div>
+                        <input type="range" id="ls_margin" min="0" max="100" value="30" class="mt-1 w-full">
+                        <p class="text-xs text-gray-500 mt-1">Figyelem: A modell nem számol az árrés növelésével arányosan csökkenő kereslettel.</p>
+                    </div>
+                    
+                    <div id="ls_notification" class="hidden p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-r-lg">
+                        <p class="font-bold">Elérted a piaci korlátokat!</p>
+                        <p class="text-sm">A keret további növelése már nem hoz többletbevételt. Fontold meg a piac szélesítését, új célcsoportok elérését vagy a termékkínálat módosítását.</p>
+                    </div>
+                </div>
+
+                <!-- Output Section -->
+                <div class="w-full lg:w-1/2 brand-accent-bg p-6 rounded-lg flex flex-col justify-center space-y-4">
+                    <h3 class="text-xl font-bold text-gray-800 text-center mb-4">Eredmények Összesítése</h3>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                        <span class="font-medium text-gray-600">Teljes Hirdetési Költség:</span>
+                        <span id="ls_totalSpend" class="font-bold text-lg text-red-600">€1000</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                        <span class="font-medium text-gray-600">Bruttó Profit (Árrés):</span>
+                        <span id="ls_grossProfit" class="font-bold text-lg text-blue-600">€1200</span>
+                    </div>
+                    <div id="ls_resultCard" class="result-card text-center p-4 rounded-lg mt-4">
+                        <p class="text-lg font-medium">Nettó Eredmény</p>
+                        <p id="ls_netProfit" class="text-4xl font-bold">€200</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adatvezérelt Növekedés Kalkulátor -->
+        <div id="calculator-adatvezerelt" class="calculator-content hidden">
+            <div class="card flex flex-col lg:flex-row gap-8">
+                <!-- Input Section -->
+                <div id="dd_channels_container" class="w-full lg:w-1/2 flex flex-col space-y-4">
+                    <!-- Dinamikusan generált csatornák helye -->
+                     <div class="flex-grow flex flex-col justify-end">
+                        <div class="flex justify-between items-center">
+                            <label for="dd_margin" class="block text-sm font-medium text-gray-700">Átlagos Árrés</label>
+                            <span class="text-sm font-semibold brand-color"><span id="dd_marginValue">30</span>%</span>
+                        </div>
+                        <input type="range" id="dd_margin" min="0" max="100" value="30" class="mt-1 w-full">
+                        <p class="text-xs text-gray-500 mt-1">Figyelem: A modell nem számol az árrés növelésével arányosan csökkenő kereslettel.</p>
+                    </div>
+                    <button id="add-channel-btn" class="w-full p-2 text-center text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg font-semibold transition-colors">+ Új csatorna hozzáadása</button>
+                </div>
+
+                <!-- Output Section -->
+                <div class="w-full lg:w-1/2 brand-accent-bg p-6 rounded-lg flex flex-col">
+                    <h3 class="text-xl font-bold text-gray-800 text-center mb-4">Eredmények Összesítése</h3>
+                    <div id="dd_summary_breakdown" class="space-y-3 mb-4 flex-grow overflow-y-auto pr-2">
+                        <!-- Csatorna bontás helye -->
+                    </div>
+                    <div class="pt-4 border-t-2 border-blue-200 space-y-3">
+                        <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
+                            <span class="font-medium text-gray-600">Átlagos kosárérték:</span>
+                            <span id="dd_avg_abv" class="font-bold text-gray-800">€0</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
+                            <span class="font-medium text-gray-600">Átlagos CPA:</span>
+                            <span id="dd_avg_cpa" class="font-bold text-gray-800">€0</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-3 rounded-lg mt-2">
+                            <span class="font-medium text-gray-600">Teljes Költség:</span>
+                            <span id="dd_totalSpend" class="font-bold text-lg text-red-600">€1000</span>
+                        </div>
+                         <div id="dd_resultCard" class="result-card text-center p-4 rounded-lg mt-2">
+                            <p class="text-lg font-medium">Nettó Eredmény</p>
+                            <p id="dd_netProfit" class="text-4xl font-bold">€200</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Formázó funkciók
+        const formatCurrency = (value) => `€${Math.round(value).toLocaleString('hu-HU')}`;
+        const formatDetailedCurrency = (value) => `€${(value || 0).toLocaleString('hu-HU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+
+        // --- ALAP ADATOK KALKULÁTOR ---
+        const revenueEl = document.getElementById('revenue');
+        const marginEl = document.getElementById('margin');
+        const marginValueEl = document.getElementById('marginValue');
+        const totalSpendEl = document.getElementById('totalSpend');
+        const grossProfitEl = document.getElementById('grossProfit');
+        const netProfitEl = document.getElementById('netProfit');
+        const resultCardEl = document.getElementById('resultCard');
+
+        function calculateBase() {
+            if (!revenueEl || !marginEl) return;
+            const revenue = 4000; // Fix érték
+            const margin = parseFloat(marginEl.value) || 0;
+            const totalAdSpend = 1000; // Fix érték
+            const grossProfit = revenue * (margin / 100);
+            const netProfit = grossProfit - totalAdSpend;
+
+            totalSpendEl.textContent = formatCurrency(totalAdSpend);
+            grossProfitEl.textContent = formatCurrency(grossProfit);
+            netProfitEl.textContent = formatCurrency(netProfit);
+            resultCardEl.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (netProfit >= 0) {
+                resultCardEl.classList.add('bg-green-100', 'text-green-800');
+                netProfitEl.textContent = `+${formatCurrency(netProfit)}`;
+            } else {
+                resultCardEl.classList.add('bg-red-100', 'text-red-800');
+            }
+        }
+
+        // --- KÖLTÉS ARÁNYOS NÖVEKEDÉS KALKULÁTOR ---
+        const ls_totalBudgetEl = document.getElementById('ls_totalBudget');
+        const ls_totalBudgetValueEl = document.getElementById('ls_totalBudgetValue');
+        const ls_fbSpendValueEl = document.getElementById('ls_fbSpendValue');
+        const ls_gdSpendValueEl = document.getElementById('ls_gdSpendValue');
+        const ls_gsSpendValueEl = document.getElementById('ls_gsSpendValue');
+        const ls_revenueEl = document.getElementById('ls_revenue');
+        const ls_marginEl = document.getElementById('ls_margin');
+        const ls_marginValueEl = document.getElementById('ls_marginValue');
+        const ls_notificationEl = document.getElementById('ls_notification');
+        const ls_totalSpendEl = document.getElementById('ls_totalSpend');
+        const ls_grossProfitEl = document.getElementById('ls_grossProfit');
+        const ls_netProfitEl = document.getElementById('ls_netProfit');
+        const ls_resultCardEl = document.getElementById('ls_resultCard');
+
+        function calculateLinearScale() {
+            if (!ls_totalBudgetEl) return;
+            const totalBudget = parseFloat(ls_totalBudgetEl.value) || 0;
+            const margin = parseFloat(ls_marginEl.value) || 0;
+            const spendCap = 4000;
+            const revenueMultiplier = 4;
+            const baseBudget = 1000;
+            const baseFb = 400;
+            const baseGd = 300;
+            const baseGs = 300;
+
+            let fbSpend, gdSpend, gsSpend;
+            if (totalBudget <= baseBudget) {
+                const ratio = totalBudget / baseBudget;
+                fbSpend = baseFb * ratio;
+                gdSpend = baseGd * ratio;
+                gsSpend = baseGs * ratio;
+            } else {
+                const extraBudget = totalBudget - baseBudget;
+                const extraPerChannel = extraBudget / 3;
+                fbSpend = baseFb + extraPerChannel;
+                gdSpend = baseGd + extraPerChannel;
+                gsSpend = baseGs + extraPerChannel;
+            }
+
+            const effectiveSpend = Math.min(totalBudget, spendCap);
+            const calculatedRevenue = effectiveSpend * revenueMultiplier;
+            const grossProfit = calculatedRevenue * (margin / 100);
+            const netProfit = grossProfit - totalBudget;
+
+            ls_totalBudgetValueEl.textContent = Math.round(totalBudget);
+            ls_fbSpendValueEl.textContent = Math.round(fbSpend);
+            ls_gdSpendValueEl.textContent = Math.round(gdSpend);
+            ls_gsSpendValueEl.textContent = Math.round(gsSpend);
+            ls_revenueEl.value = Math.round(calculatedRevenue);
+            ls_totalSpendEl.textContent = formatCurrency(totalBudget);
+            ls_grossProfitEl.textContent = formatCurrency(grossProfit);
+            ls_netProfitEl.textContent = formatCurrency(netProfit);
+
+            ls_resultCardEl.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (netProfit >= 0) {
+                ls_resultCardEl.classList.add('bg-green-100', 'text-green-800');
+                ls_netProfitEl.textContent = `+${formatCurrency(netProfit)}`;
+            } else {
+                ls_resultCardEl.classList.add('bg-red-100', 'text-red-800');
+            }
+
+            if (totalBudget > spendCap) {
+                ls_notificationEl.classList.remove('hidden');
+            } else {
+                ls_notificationEl.classList.add('hidden');
+            }
+        }
+
+        // --- ADATVEZÉRELT NÖVEKEDÉS KALKULÁTOR ---
+        const dd_channelsContainer = document.getElementById('dd_channels_container');
+        const dd_addChannelBtn = document.getElementById('add-channel-btn');
+        const dd_margin = document.getElementById('dd_margin');
+        const dd_marginValue = document.getElementById('dd_marginValue');
+        const dd_summaryBreakdown = document.getElementById('dd_summary_breakdown');
+        const dd_totalSpend = document.getElementById('dd_totalSpend');
+        const dd_avg_abv = document.getElementById('dd_avg_abv');
+        const dd_avg_cpa = document.getElementById('dd_avg_cpa');
+        const dd_netProfit = document.getElementById('dd_netProfit');
+        const dd_resultCard = document.getElementById('dd_resultCard');
+        
+        let dd_channels = [];
+        let dd_nextChannelId = 0;
+
+        const defaultChannels = [
+            { id: `dd_channel_${dd_nextChannelId++}`, name: 'Facebook hirdetések és facebook remarketing', spend: 400, visitors: 2000, cr: 2.5, abv: 40, isDefault: true },
+            { id: `dd_channel_${dd_nextChannelId++}`, name: 'Google képes hirdetések', spend: 300, visitors: 2000, cr: 1.5, abv: 40, isDefault: true },
+            { id: `dd_channel_${dd_nextChannelId++}`, name: 'Google kulcsszavas hirdetések', spend: 300, visitors: 1000, cr: 2.0, abv: 40, isDefault: true },
+        ];
+
+        function createChannelCardHTML(channel) {
+            const costLabel = channel.isDefault ? 'Hirdetési költség (€)' : 'Csatorna fenntartási költésége (€)';
+            return `
+                <div id="${channel.id}" class="channel-card space-y-3 p-3 border rounded-lg">
+                    <div class="flex justify-between items-center">
+                        ${channel.isDefault ? `<h3 class="text-md font-semibold text-gray-800">${channel.name}</h3>` : `<input type="text" value="${channel.name}" class="channel-name-input text-md font-semibold text-gray-800 border-b w-full" placeholder="Csatorna neve">`}
+                        <div class="flex items-center gap-2">
+                             <button class="icon-btn settings-toggle-btn" title="Beállítások">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 16v-2m8-8h2M4 12H2m15.364 6.364l1.414 1.414M4.222 4.222l1.414 1.414m12.728 0l-1.414 1.414M5.636 18.364l-1.414 1.414M12 16a4 4 0 110-8 4 4 0 010 8z" /></svg>
+                            </button>
+                            <button class="icon-btn reset-btn" title="Visszaállítás">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5" /><path stroke-linecap="round" stroke-linejoin="round" d="M4 9a9 9 0 0114.13-5.22M20 15a9 9 0 01-14.13 5.22" /></svg>
+                            </button>
+                            ${!channel.isDefault ? `<button class="icon-btn delete-btn" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">${costLabel}</label>
+                        <div class="flex items-center mt-1">
+                            <button class="stepper-btn stepper-btn-dec" data-field="spend" data-step="10">-</button>
+                            <input type="number" data-field="spend" value="${channel.spend}" class="w-full text-center rounded-md border-gray-300 shadow-sm sm:text-sm p-1 mx-1">
+                            <button class="stepper-btn stepper-btn-inc" data-field="spend" data-step="10">+</button>
+                        </div>
+                    </div>
+                    <div class="settings-panel hidden pt-2 mt-2 border-t">
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Látogatók (db)</label>
+                                <div class="flex items-center mt-1">
+                                    <button class="stepper-btn stepper-btn-dec" data-field="visitors" data-step="10">-</button>
+                                    <input type="number" data-field="visitors" value="${channel.visitors}" class="w-full text-center rounded-md border-gray-300 shadow-sm sm:text-sm p-1 mx-1">
+                                    <button class="stepper-btn stepper-btn-inc" data-field="visitors" data-step="10">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Átlag kosárérték (€)</label>
+                                <div class="flex items-center mt-1">
+                                    <button class="stepper-btn stepper-btn-dec" data-field="abv" data-step="1">-</button>
+                                    <input type="number" data-field="abv" value="${channel.abv}" class="w-full text-center rounded-md border-gray-300 shadow-sm sm:text-sm p-1 mx-1">
+                                    <button class="stepper-btn stepper-btn-inc" data-field="abv" data-step="1">+</button>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-600">Konverziós ráta (%)</label>
+                                <div class="flex items-center mt-1">
+                                    <button class="stepper-btn stepper-btn-dec" data-field="cr" data-step="0.1">-</button>
+                                    <input type="number" step="0.1" data-field="cr" value="${channel.cr}" class="w-full text-center rounded-md border-gray-300 shadow-sm sm:text-sm p-1 mx-1">
+                                    <button class="stepper-btn stepper-btn-inc" data-field="cr" data-step="0.1">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        <p class="text-gray-500">Egy látogató ára (CPC): <strong class="cpc-output text-gray-700">€0</strong></p>
+                        <p class="text-gray-500">Egy vásárló ára (CPA): <strong class="cpa-output text-gray-700">€0</strong></p>
+                        <p class="text-gray-500">Generált Forgalom: <strong class="revenue-output brand-color">€0</strong></p>
+                        <p class="text-gray-500">Bruttó Profit (Árrés): <strong class="profit-output text-blue-600">€0</strong></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAllChannels() {
+            const marginSection = dd_channelsContainer.querySelector('.flex-grow');
+            dd_channelsContainer.innerHTML = '';
+            dd_channels.forEach(ch => {
+                dd_channelsContainer.insertAdjacentHTML('beforeend', createChannelCardHTML(ch));
+            });
+            dd_channelsContainer.appendChild(marginSection);
+            dd_channelsContainer.appendChild(dd_addChannelBtn);
+        }
+
+        function calculateAndRenderDD() {
+            let totalSpend = 0, totalRevenue = 0, totalConversions = 0;
+            const margin = parseFloat(dd_margin.value) / 100 || 0;
+            dd_summaryBreakdown.innerHTML = '';
+
+            dd_channels.forEach(channel => {
+                const card = document.getElementById(channel.id);
+                if(!card) return;
+
+                const values = {
+                    spend: parseFloat(card.querySelector(`input[data-field="spend"]`).value) || 0,
+                    visitors: parseFloat(card.querySelector(`input[data-field="visitors"]`).value) || 0,
+                    cr: parseFloat(card.querySelector(`input[data-field="cr"]`).value) || 0,
+                    abv: parseFloat(card.querySelector(`input[data-field="abv"]`).value) || 0
+                };
+                 if (!channel.isDefault) {
+                    channel.name = card.querySelector('.channel-name-input').value || 'Új csatorna';
+                 }
+
+                const conversions = values.visitors * (values.cr / 100);
+                const revenue = conversions * values.abv;
+                const profit = revenue * margin;
+                const cpc = values.visitors > 0 ? values.spend / values.visitors : 0;
+                const cpa = conversions > 0 ? values.spend / conversions : 0;
+                
+                totalSpend += values.spend;
+                totalRevenue += revenue;
+                totalConversions += conversions;
+
+                card.querySelector('.cpc-output').textContent = formatDetailedCurrency(cpc);
+                card.querySelector('.cpa-output').textContent = formatDetailedCurrency(cpa);
+                card.querySelector('.revenue-output').textContent = formatCurrency(revenue);
+                card.querySelector('.profit-output').textContent = formatCurrency(profit);
+                
+
+                 dd_summaryBreakdown.innerHTML += `
+                    <div class="bg-white p-3 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 text-sm mb-1">${channel.name}</h4>
+                        <div class="grid grid-cols-3 gap-x-2 text-xs text-center">
+                            <div>
+                                <p class="text-gray-500">Forgalom</p>
+                                <p class="font-bold brand-color">${formatCurrency(revenue)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Bruttó Profit</p>
+                                <p class="font-bold text-blue-600">${formatCurrency(profit)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Vásárló (CPA)</p>
+                                <p class="font-bold text-gray-700">${formatDetailedCurrency(cpa)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const grossProfit = totalRevenue * margin;
+            const netProfit = grossProfit - totalSpend;
+            const avgAbv = totalConversions > 0 ? totalRevenue / totalConversions : 0;
+            const avgCpa = totalConversions > 0 ? totalSpend / totalConversions : 0;
+
+            dd_totalSpend.textContent = formatCurrency(totalSpend);
+            dd_avg_abv.textContent = formatCurrency(avgAbv);
+            dd_avg_cpa.textContent = formatCurrency(avgCpa);
+            dd_netProfit.textContent = formatCurrency(netProfit);
+            
+            dd_resultCard.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (netProfit >= 0) {
+                dd_resultCard.classList.add('bg-green-100', 'text-green-800');
+                dd_netProfit.textContent = `+${formatCurrency(netProfit)}`;
+            } else {
+                dd_resultCard.classList.add('bg-red-100', 'text-red-800');
+            }
+        }
+        
+        // --- ÁLTALÁNOS LOGIKA ---
+        window.addEventListener('DOMContentLoaded', () => {
+            if (marginEl) { marginEl.addEventListener('input', () => { marginValueEl.textContent = marginEl.value; calculateBase(); }); }
+            if (ls_totalBudgetEl) {
+                ls_totalBudgetEl.addEventListener('input', calculateLinearScale);
+                ls_marginEl.addEventListener('input', () => { ls_marginValueEl.textContent = ls_marginEl.value; calculateLinearScale(); });
+            }
+
+            if (dd_channelsContainer) {
+                dd_channels = [...defaultChannels.map(ch => ({...ch, initialValues: {...ch}}))];
+                dd_channels.forEach(ch => {
+                   ch.cpc = ch.visitors > 0 ? ch.spend / ch.visitors : 0;
+                });
+                renderAllChannels();
+                calculateAndRenderDD();
+
+                dd_margin.addEventListener('input', () => { 
+                    dd_marginValue.textContent = dd_margin.value;
+                    calculateAndRenderDD();
+                });
+
+                dd_addChannelBtn.addEventListener('click', () => {
+                    const newChannel = { id: `dd_channel_${dd_nextChannelId++}`, name: 'Új csatorna', spend: 0, visitors: 0, cr: 0, abv: 0, isDefault: false };
+                    newChannel.initialValues = {...newChannel};
+                    newChannel.cpc = 0;
+                    dd_channels.push(newChannel);
+                    renderAllChannels();
+                });
+
+                dd_channelsContainer.addEventListener('click', (e) => {
+                    const card = e.target.closest('.channel-card');
+                    if (!card) return;
+                    const channelId = card.id;
+                    const channel = dd_channels.find(ch => ch.id === channelId);
+
+                    if (e.target.closest('.settings-toggle-btn')) {
+                        card.querySelector('.settings-panel').classList.toggle('hidden');
+                    }
+                    if (e.target.closest('.reset-btn')) {
+                        Object.keys(channel.initialValues).forEach(key => {
+                            const input = card.querySelector(`input[data-field="${key}"]`);
+                            if(input) input.value = channel.initialValues[key];
+                        });
+                        channel.cpc = channel.initialValues.visitors > 0 ? channel.initialValues.spend / channel.initialValues.visitors : 0;
+                        calculateAndRenderDD();
+                    }
+                    if (e.target.closest('.delete-btn')) {
+                         dd_channels = dd_channels.filter(ch => ch.id !== channelId);
+                         renderAllChannels();
+                         calculateAndRenderDD();
+                    }
+                    if(e.target.closest('.stepper-btn')){
+                        const btn = e.target.closest('.stepper-btn');
+                        const field = btn.dataset.field;
+                        const step = parseFloat(btn.dataset.step);
+                        const input = card.querySelector(`input[data-field="${field}"]`);
+                        let value = parseFloat(input.value) || 0;
+                        if(btn.classList.contains('stepper-btn-inc')) value += step;
+                        else value -= step;
+                        if(value < 0) value = 0;
+                        input.value = (step === 0.1) ? value.toFixed(1) : Math.round(value);
+                        
+                        // Recalculate based on changed field
+                         const currentSpend = parseFloat(card.querySelector(`input[data-field="spend"]`).value) || 0;
+                         const currentVisitors = parseFloat(card.querySelector(`input[data-field="visitors"]`).value) || 0;
+
+                         if (field === 'spend') {
+                            if (channel.cpc > 0) {
+                                card.querySelector(`input[data-field="visitors"]`).value = Math.round(currentSpend / channel.cpc);
+                            }
+                         } else if (field === 'visitors') {
+                            if (currentVisitors > 0) {
+                                channel.cpc = currentSpend / currentVisitors;
+                            }
+                         }
+                        calculateAndRenderDD();
+                    }
+                });
+                
+                 dd_channelsContainer.addEventListener('input', (e) => {
+                    if(e.target.tagName !== 'INPUT') return;
+                    
+                    const card = e.target.closest('.channel-card');
+                    if (!card) return;
+                    const channelId = card.id;
+                    const channel = dd_channels.find(ch => ch.id === channelId);
+                    const field = e.target.dataset.field;
+
+                    if (field === 'spend' || field === 'visitors') {
+                         const currentSpend = parseFloat(card.querySelector(`input[data-field="spend"]`).value) || 0;
+                         const currentVisitors = parseFloat(card.querySelector(`input[data-field="visitors"]`).value) || 0;
+
+                         if (field === 'spend') {
+                            if (channel.cpc > 0) {
+                                card.querySelector(`input[data-field="visitors"]`).value = Math.round(currentSpend / channel.cpc);
+                            }
+                         } else if (field === 'visitors') {
+                            if (currentVisitors > 0) {
+                                channel.cpc = currentSpend / currentVisitors;
+                            }
+                         }
+                    }
+                    calculateAndRenderDD();
+                });
+            }
+
+            const tabs = document.querySelectorAll('.calculator-tab');
+            const contents = document.querySelectorAll('.calculator-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.add('hidden'));
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.target).classList.remove('hidden');
+                });
+            });
+
+            calculateBase();
+            calculateLinearScale();
+        });
+    </script>
+</body>
+</html>
+
