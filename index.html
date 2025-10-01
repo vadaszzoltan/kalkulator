@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.5.23/dist/jspdf.plugin.autotable.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -112,6 +115,10 @@
         .icon-btn:hover {
             color: #4b5563; /* gray-600 */
             background-color: #f3f4f6; /* gray-100 */
+        }
+        .icon-btn:disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -278,27 +285,37 @@
                 </div>
 
                 <!-- Output Section -->
-                <div class="w-full lg:w-1/2 brand-accent-bg p-6 rounded-lg flex flex-col">
-                    <h3 class="text-xl font-bold text-gray-800 text-center mb-4">Eredmények Összesítése</h3>
-                    <div id="dd_summary_breakdown" class="space-y-3 mb-4 flex-grow overflow-y-auto pr-2">
-                        <!-- Csatorna bontás helye -->
+                <div id="dd_summary_container" class="w-full lg:w-1/2 brand-accent-bg p-6 rounded-lg flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <input type="text" id="plan_name_input" placeholder="Terv neve..." class="w-full mr-4 p-2 rounded-md border-gray-300 shadow-sm sm:text-sm">
+                        <button id="download_pdf_btn" class="icon-btn" title="PDF Letöltése">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                        </button>
                     </div>
-                    <div class="pt-4 border-t-2 border-blue-200 space-y-3">
-                        <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
-                            <span class="font-medium text-gray-600">Átlagos kosárérték:</span>
-                            <span id="dd_avg_abv" class="font-bold text-gray-800">€0</span>
+                    <div id="dd_summary_content" class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-800 text-center mb-4">Eredmények Összesítése</h3>
+                        <div id="dd_summary_breakdown" class="space-y-3 mb-4 flex-grow overflow-y-auto pr-2" style="max-height: 250px;">
+                            <!-- Csatorna bontás helye -->
                         </div>
-                        <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
-                            <span class="font-medium text-gray-600">Átlagos CPA:</span>
-                            <span id="dd_avg_cpa" class="font-bold text-gray-800">€0</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-white p-3 rounded-lg mt-2">
-                            <span class="font-medium text-gray-600">Teljes Költség:</span>
-                            <span id="dd_totalSpend" class="font-bold text-lg text-red-600">€1000</span>
-                        </div>
-                         <div id="dd_resultCard" class="result-card text-center p-4 rounded-lg mt-2">
-                            <p class="text-lg font-medium">Nettó Eredmény</p>
-                            <p id="dd_netProfit" class="text-4xl font-bold">€200</p>
+                        <div class="pt-4 border-t-2 border-blue-200 space-y-3">
+                            <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
+                                <span class="font-medium text-gray-600">Átlagos kosárérték:</span>
+                                <span id="dd_avg_abv" class="font-bold text-gray-800">€0</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-2 rounded-lg text-sm">
+                                <span class="font-medium text-gray-600">Átlagos CPA:</span>
+                                <span id="dd_avg_cpa" class="font-bold text-gray-800">€0</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-3 rounded-lg mt-2">
+                                <span class="font-medium text-gray-600">Teljes Költség:</span>
+                                <span id="dd_totalSpend" class="font-bold text-lg text-red-600">€1000</span>
+                            </div>
+                             <div id="dd_resultCard" class="result-card text-center p-4 rounded-lg mt-2">
+                                <p class="text-lg font-medium">Nettó Eredmény</p>
+                                <p id="dd_netProfit" class="text-4xl font-bold">€200</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -579,6 +596,89 @@
             }
         }
         
+        async function generatePDF() {
+            const planNameInput = document.getElementById('plan_name_input');
+            const planName = planNameInput.value.trim() || 'Marketing Terv';
+            const summaryContent = document.getElementById('dd_summary_content');
+            
+            const downloadBtn = document.getElementById('download_pdf_btn');
+            const originalBtnContent = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '...';
+            downloadBtn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(summaryContent, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(22);
+                doc.text(planName, 14, 22);
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                doc.text(`Készült: ${new Date().toLocaleDateString('hu-HU')}`, 14, 29);
+
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const imgWidth = pdfWidth - 28;
+                const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 14, 40, imgWidth, imgHeight);
+
+                const tableStartY = 40 + imgHeight + 10;
+                const head = [['Csatorna neve', 'Költség (€)', 'Látogató', 'CR (%)', 'ABV (€)', 'CPA (€)', 'Forgalom (€)', 'Profit (€)']];
+                const body = [];
+                const margin = parseFloat(dd_margin.value) / 100 || 0;
+
+                dd_channels.forEach(channel => {
+                    const card = document.getElementById(channel.id);
+                    if (!card) return;
+
+                    const values = {
+                        name: channel.name,
+                        spend: parseFloat(card.querySelector(`input[data-field="spend"]`).value) || 0,
+                        visitors: parseFloat(card.querySelector(`input[data-field="visitors"]`).value) || 0,
+                        cr: parseFloat(card.querySelector(`input[data-field="cr"]`).value) || 0,
+                        abv: parseFloat(card.querySelector(`input[data-field="abv"]`).value) || 0
+                    };
+                    
+                    const conversions = values.visitors * (values.cr / 100);
+                    const revenue = conversions * values.abv;
+                    const profit = revenue * margin;
+                    const cpa = conversions > 0 ? values.spend / conversions : 0;
+
+                    body.push([
+                        values.name,
+                        values.spend.toLocaleString('hu-HU'),
+                        values.visitors.toLocaleString('hu-HU'),
+                        values.cr.toFixed(1),
+                        values.abv.toLocaleString('hu-HU'),
+                        cpa.toFixed(2),
+                        Math.round(revenue).toLocaleString('hu-HU'),
+                        Math.round(profit).toLocaleString('hu-HU')
+                    ]);
+                });
+                
+                doc.autoTable({
+                    startY: tableStartY,
+                    head: head,
+                    body: body,
+                    theme: 'grid',
+                    headStyles: { fillColor: [37, 99, 235] }
+                });
+
+                doc.save(`${planName.replace(/ /g, '_')}.pdf`);
+
+            } catch (error) {
+                console.error("Hiba a PDF generálása közben:", error);
+                alert("Hiba történt a PDF generálása közben. Kérjük, próbálja újra.");
+            } finally {
+                downloadBtn.innerHTML = originalBtnContent;
+                downloadBtn.disabled = false;
+            }
+        }
+
+
         // --- ÁLTALÁNOS LOGIKA ---
         window.addEventListener('DOMContentLoaded', () => {
             if (marginEl) { marginEl.addEventListener('input', () => { marginValueEl.textContent = marginEl.value; calculateBase(); }); }
@@ -599,6 +699,9 @@
                     dd_marginValue.textContent = dd_margin.value;
                     calculateAndRenderDD();
                 });
+                
+                document.getElementById('download_pdf_btn').addEventListener('click', generatePDF);
+
 
                 dd_addChannelBtn.addEventListener('click', () => {
                     const newChannel = { id: `dd_channel_${dd_nextChannelId++}`, name: 'Új csatorna', spend: 0, visitors: 0, cr: 0, abv: 0, isDefault: false };
